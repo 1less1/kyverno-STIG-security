@@ -1,0 +1,32 @@
+# Audit Logging
+
+# V-242461 - "Kubernetes API Server audit logs must be enabled."
+
+# This policy checks if the kube-apiserver pod has the argument "--audit-policy-file" set to a "log file directory".
+# NOTE: This policy just checks if a path is set to the audit-policy-file!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-audit-logs
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-audit-logs
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --audit-policy-file set to a log file directory"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--audit-policy-file=/*"]

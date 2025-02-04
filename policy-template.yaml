@@ -1,0 +1,38 @@
+### Policy- Template ###
+
+# Category
+
+# STIG Number - Title
+
+# Other Notes
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: policy-name # Reflects the function of the policy and matches with the file name
+  labels:
+    group: cool-security-policies # Policy Group 
+spec:
+  validationFailureAction: Audit # or Enforce
+  # Audit = Log 
+  # Enforce = Deny Pod Creation
+  rules:
+    - name: check-if-secured # Rule Name within the Policy 
+      match:
+        resources:
+          kinds:
+            - Pod # Target Resource(s)
+          names:
+            - my-pod # Name of Target Pod
+          namespaces:
+            - my-namespace # Target Namespace 
+      validate:
+        message: "Error Message - Something Broken" # Error message displayed if policy is violated!
+        deny: # Deny creation of pod if below requirements are not met
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}" # Key to test against - List of arguments within pod
+                operator: AllNotIn # or AnyIn 
+                value: ["--audit-policy-file=/*"] # Target Value to test against the Key
+                # AllNotIn - "If the value is NOT in the container DENY creation"
+                # AnyIn - "If the value is IN the container DENY creation"

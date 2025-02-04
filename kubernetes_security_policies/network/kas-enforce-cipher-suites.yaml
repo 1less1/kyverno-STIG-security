@@ -1,0 +1,40 @@
+# Network Policies
+
+# V-242418 - "The Kubernetes API server must use approved cipher suites."
+
+# This policy checks if the kube-apiserver pod has the argument "--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384".
+
+# Further Directions from Kubernetes STIG V2R1:
+# Set the value of "--tls-cipher-suites" to:
+# TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+
+# Current Cipher on ARK82:
+# TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-cipher-suites
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-tls-cipher-suites
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --tls-cipher-suites set to an approved cipher "
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]

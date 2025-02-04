@@ -1,0 +1,31 @@
+# Audit Logging
+
+# V-242464 - "The Kubernetes API Server audit log retention must be set."
+
+# This policy checks if the kube-apiserver pod has the argument "--audit-log-maxage" set to a minimum of "30".
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-audit-log-maxage
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-audit-log-maxage
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --audit-log-maxage=30"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--audit-log-maxage=30"]

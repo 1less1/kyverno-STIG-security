@@ -1,0 +1,35 @@
+# Network Policies
+
+# V-242438 - "Kubernetes API Server must configure timeouts to limit attack surface."
+
+# This policy checks if the kube-apiserver pod has the argument "--request-timeout" set to a value other than "zero".
+# The "--request-timeout" should be set to a value GREATER THAN 0 and by default the "--request-timeout" is set to 1 minute.
+# Policy violation occurs if --request-timeout=0
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-timeouts
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-request-timeout
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --request-timeout set to a value greater than 0."
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AnyIn # Deny pod creation if --request-timeout is set to 0 (I assume the timeout would not be set to a negative number)
+                value: ["--request-timeout=0", "--request-timeout=0s", "--request-timeout=0h", "--request-timeout=0h", "--request-timeout=0d", "--request-timeout=0*"]
+
+# NOTE: You can probably put this sole value: "--request-timeout=0*" since it encompasses all possible invalid values including 0

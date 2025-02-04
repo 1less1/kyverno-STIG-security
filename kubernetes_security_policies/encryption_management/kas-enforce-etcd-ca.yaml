@@ -1,0 +1,32 @@
+# Encryption Management
+
+# V-242422 - "Kubernetes API Server must have a certificate for communication."
+
+# This policy checks if the kube-apiserver pod has the argument "--etcd-cafile" set to a path containing an Approved Organizational Certificate.
+# NOTE: This policy just checks if there is an existing file path, it is up to the user to determine if the ca file is approved!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-etcd-ca
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-etcd-cafile
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --etcd-cafile set to a path containing an approved CA"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: [" --etcd-cafile=/*"]

@@ -1,0 +1,33 @@
+# Audit Logging
+
+# V-242402 - "The Kubernetes API Server must have an audit log path set."
+# V-242465 - "The Kubernetes API Server audit log path must be set."
+
+# This policy checks if the kube-apiserver pod has the argument "--audit-log-path" set to a secure location for the audit logs to be written.
+# NOTE: This policy just checks if a path is set, it is on the user to determine if the path is secure!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-audit-log-path
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-audit-log-path
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --audit-log-path set to a secure location for audit logs to be written."
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--audit-log-path=/*"]

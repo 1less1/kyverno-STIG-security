@@ -1,0 +1,32 @@
+# Network Policies
+
+# V-242378 - "The Kubernetes API Server must use TLS 1.2, at a minimum, to protect the confidentiality of sensitive data during electronic dissemination."
+
+# This policy checks if the kube-apiserver pod has the argument "--tls-min-version" set to "VersionTLS12" or higher. 
+# Currently TLS13 and TLS12 are the only versions that satisfy this STIG so it has been hard coded to check for both!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-tls
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-tls-min-version
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --tls-min-version set to VersionTLS12 or higher."
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--tls-min-version=VersionTLS12", "--tls-min-version=VersionTLS13"] # Checks for arguments using TLS12 and TLS13

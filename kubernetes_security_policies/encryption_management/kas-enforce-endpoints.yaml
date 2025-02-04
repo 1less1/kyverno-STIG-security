@@ -1,0 +1,49 @@
+# Encryption Management
+
+# V-245544 - "Kubernetes endpoints must use approved organizational certificate and key pair to protect information in transit."
+
+# This policy checks if the kube-apiserver pod has the arguments "--kubelet-client-certificate" and "--kubelet-client-key" set to an Approved Organizational Certificate and key pair.
+# NOTE: This policy just checks if there is an existing file path, it is up to the user to determine if the ca file is approved!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-endpoints
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-kubelet-client-certificate
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --kubelet-client-certficate set to a path containing an approved CA"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--kubelet-client-certificate=/*"]
+    - name: check-kubelet-client-key
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --kubelet-client-key set to a path containing an approved CA"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--kubelet-client-key=/*"]

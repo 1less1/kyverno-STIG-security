@@ -1,0 +1,34 @@
+# Network Policies
+
+# V-242386 - "The Kubernetes API server must have the insecure port flag disabled."
+
+# This policy checks if the kube-apiserver pod has the argument "--insecure-port" set to "0".
+# This closes the API server's insecure port, ensuring that the "--insecure-bind-address" is not set.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-insecure-port
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-insecure-port
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --insecure-port=0"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn # Deny pod creation if --insecure-port is NOT set to zero
+                value: ["--insecure-port=0"]
+
+# NOTE --insecure-port is not even present in the arguments so does that mean it is not set so it should not be a problem?

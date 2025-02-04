@@ -1,0 +1,32 @@
+# Encryption Management
+
+# V-242421 - "Kubernetes Controller Manager must have the SSL Certificate Authority set."
+
+# This policy checks if the kube-controller-manager pod has the argument "--root-ca-file" set to a path containing an Approved Organizational Certificate.
+# NOTE: This policy just checks if there is an existing file path, it is up to the user to determine if the ca file is approved!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kcm-enforce-ssl-ca
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-ssl-ca
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-controller-manager-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-controller-manager must have --root-ca-file set to a path containing an approved CA"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--root-ca-file=/*"]

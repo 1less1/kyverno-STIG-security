@@ -1,0 +1,31 @@
+# Authentication and Authorization
+
+# V-242390 - "The Kubernetes API server must have anonymous authentication disabled."
+
+# This policy checks if the kube-apiserver pod has the argument "--anonymous-auth" set to "false".
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-anonymous-auth
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-anonymous-auth
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --anonymous-auth=false"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--anonymous-auth=false"] 

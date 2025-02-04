@@ -1,0 +1,36 @@
+# Network Policies
+
+# V-242388 - "The Kubernetes API server must have the insecure bind address not set."
+
+# This policy checks to make sure the kube-apiserver pod does NOT have the arguments "--insecure-bind-port" or "--insecure-bind-address".
+# Policy violation occurs if either arguments are present.
+
+# Further Directions from Kubernetes STIG V2R1: 
+# Close or set the insecure bind address by setting the API server's "--insecure-bind-address" flag to an IP or leave it unset and ensure that the "--insecure-bind-port" is not set.
+# You can also remove the value of "--insecure-bind-address" setting
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-insecure-bind-address
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-insecure-bind-address
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must NOT have --insecure-bind-port or --insecure-bind-address set"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AnyIn # Deny pod creation if --insecure-bind-port or --insecure-bind-address is PRESENT
+                value: ["--insecure-bind-port=*", "--insecure-bind-address=*"]

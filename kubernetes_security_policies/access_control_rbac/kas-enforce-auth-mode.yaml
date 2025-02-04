@@ -1,0 +1,31 @@
+# Access Control - RBAC
+
+# V-242382 - "The Kubernetes API Server must enable Node,RBAC as the authorization mode."
+
+# This policy checks if the kube-apiserver pod has the argument "--authorization-mode" set to "Node,RBAC".
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-auth-mode
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-auth-mode
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --authorization-mode=Node,RBAC"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--authorization-mode=Node,RBAC"] 

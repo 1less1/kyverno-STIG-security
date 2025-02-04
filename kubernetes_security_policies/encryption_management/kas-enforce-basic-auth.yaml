@@ -1,0 +1,32 @@
+# Encryption Management
+
+# V-245542 - "Kubernetes API Server must disable basic authentication to protect information in transit."
+
+# This policy checks to make sure the kube-apiserver pod does NOT have the argument "--basic-auth-file".
+# Policy violation occurs if --basic-auth-file is present!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-basic-auth
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-basic-auth
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must not have the argument --basic-auth-file"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AnyIn # Deny pod creation if --basic-auth-file is present!
+                value: ["--basic-auth-file=*"]

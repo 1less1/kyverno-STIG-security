@@ -1,0 +1,32 @@
+# Encryption Management
+
+# V-245543 - "Kubernetes API Server must disable token authentication to protect information in transit."
+
+# This policy checks to make sure the kube-apiserver pod does NOT have the argument "--token-auth-file".
+# Policy violation occurs if --token-auth-file is present!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-token-auth
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-token-auth
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must not have the argument --token-auth-file"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AnyIn # Deny pod creation if --token-auth-file is present!
+                value: ["--token-auth-file=*"]

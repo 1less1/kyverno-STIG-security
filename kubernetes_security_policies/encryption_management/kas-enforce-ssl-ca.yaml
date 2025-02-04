@@ -1,0 +1,32 @@
+# Encryption Management
+
+# V-242419 - "Kubernetes API Server must have the SSL Certificate Authority set."
+
+# This policy checks if the kube-apiserver pod has the argument "--client-ca-file" set to a path containing an Approved Organizational Certificate.
+# NOTE: This policy just checks if there is an existing file path, it is up to the user to determine if the ca file is approved!
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kas-enforce-ssl-ca
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-ssl-ca
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-apiserver-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-apiserver must have --client-ca-file set to a path containing an approved CA"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--client-ca-file=/*"]

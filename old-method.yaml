@@ -1,0 +1,37 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kubernetes-security-policies
+spec:
+  validationFailureAction: enforce  # Ensure the policy enforcement action is set
+  rules:
+    - name: check-anonymous-auth # V-242390
+      match:
+        resources:
+          kinds:
+            - Pod
+      validate:
+        message: "anonymous authentication must be disabled."
+        pattern:
+          spec:
+            containers:
+              - name: kube-apiserver
+                args:
+                  - "--anonymous-auth=false"
+    - name: check-etcd-client-auth # V-243423
+
+      match:
+        resources:
+          kinds:
+            - Pod
+      validate:
+        message: "etcd client authentication must be enabled."
+        pattern:
+          spec:
+            containers:
+              - name: etcd
+                args:
+                  - "--client-cert-auth=true"
+
+
+

@@ -1,0 +1,31 @@
+# Access Control - RBAC
+
+# V-242384 - "The Kubernetes Scheduler must have secure binding."
+
+# This policy checks if the kube-scheduler pod has the argument "--bind-address" set to "127.0.0.1".
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ks-enforce-secure-binding
+  labels:
+    group: kubernetes-security-policies
+spec:
+  validationFailureAction: Audit
+  rules:
+    - name: check-secure-binding
+      match:
+        resources:
+          kinds:
+            - Pod
+          names:
+            - kube-scheduler-* # Name of Target Pod (can be changed for specific use case)
+          namespaces:
+            - kube-system # Target Namespace (can be changed for specific use case)
+      validate:
+        message: "The kube-scheduler must have --bind-address=127.0.0.1"
+        deny:
+          conditions:
+            all: 
+              - key: "{{ request.object.spec.containers[].args[] }}"
+                operator: AllNotIn
+                value: ["--bind-address=127.0.0.1"] 

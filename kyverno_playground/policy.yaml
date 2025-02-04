@@ -1,0 +1,21 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: test-policy
+spec:
+  rules:
+  - name: check-args
+    match:
+      resources:
+        kinds:
+        - Pod
+        names:
+        - "test-pod"
+    validate:
+      message: "The container must have the argument lit=true."
+      deny:
+        conditions:
+          all:
+          - key: "{{ request.object.spec.containers[].args[] }}"
+            operator: AllNotIn
+            value: ["lit=true"]

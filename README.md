@@ -1,13 +1,26 @@
 # Kyverno STIG Security
 
+### 2024 JCU Internship: CDTs Dominick Olhava and Amber Strapponi
+
+<div align="center">
+  <img src="./images/jcu_project.png" width="300">
+  <img src="./images/kyverno_project.png" width="300">
+</div>
+
+### Internship Description:
+Selected as one of two interns for a competitive 2024 internship program. Collaborated with JCU's Platform Development Team to fortify the security posture of ARK, their custom built Kubernetes platform. Ensured ARK had continuous compliance with DISA STIGs by leveraging Kyverno's policy engine to automate enforcement of security policies within Kubernetes.
+
+### Key Responsibilities and Achievements:
+- Utilized Kyverno and YAML to develop and implement security policies for automating the verification of Kubernetes configurations and server resources for 101 ARK Servers across many security enclaves.
+- Contributed to enhancing the security posture of Kubernetes pods and containerized applications through policy automation and configuration validation.
+
+# Policy Deployment
+Internship Objective: Configure Kyverno to apply as many DISA STIGs as possible in order to secure Kubernetes and RKE2 Systems.   
+
 ## Getting started
-
-Clone the repo using: https://github.com/1less1/kyverno-STIG-security.git
-
-# Kyverno Policy Deployment
-**2024 JCU Internship: CDTs Amber Strapponi and Dominick Olhava**  
-
-Objective: Configure Kyverno to apply as many DISA STIGs as possible in order to secure Kubernetes and RKE2 Systems.   
+Clone the repo using: 
+```bash
+https://github.com/1less1/kyverno-STIG-security.git
 
 [Official Kyverno Documentation](https://kyverno.io/)   
 [Kyverno Policy Repo](https://github.com/1less1/kyverno-STIG-security)

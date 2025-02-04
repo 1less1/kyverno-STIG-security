@@ -1,5 +1,5 @@
 ### Authentication and Authorization ###   
-#### [Home](https://github.com/1less1/Army-JCU-Kyverno/blob/main/wiki/wiki_home.md) ####
+#### [Home](./wiki_home.md) ####
 ---
 | STIG Number | Title | Policy | Resource |
 | ----------- | ----- | ------ | -------- |
